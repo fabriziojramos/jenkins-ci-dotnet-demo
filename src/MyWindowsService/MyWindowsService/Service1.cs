@@ -29,11 +29,20 @@ namespace MyWindowsService
         {
             firstRun = true;
 
-            Log(
-                LogToCouchbase(new List<string> { "OnStart:", DateTime.Now.ToString() })
-            );
-
+            // Arranca el listener HTTP primero: listener.Start() solo abre el socket
+            // (no bloquea) y el loop de escucha corre en su propio hilo.
             StartHttpServer();
+
+            // El logging a Couchbase implica llamadas de red síncronas (ClusterHelper.Initialize
+            // + Upsert). Si el servidor Couchbase no responde, esto puede colgarse mucho más
+            // tiempo que el timeout de arranque de SCM y dejar el servicio en START_PENDING.
+            // Se despacha en background para que OnStart() retorne de inmediato.
+            ThreadPool.QueueUserWorkItem(_ =>
+            {
+                Log(
+                    LogToCouchbase(new List<string> { "OnStart:", DateTime.Now.ToString() })
+                );
+            });
         }
 
         protected override void OnStop()
