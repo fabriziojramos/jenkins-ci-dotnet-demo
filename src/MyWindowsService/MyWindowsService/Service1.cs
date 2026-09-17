@@ -13,7 +13,7 @@ namespace MyWindowsService
     public partial class Service1 : ServiceBase
     {
         // Cambia este valor entre builds para demostrar visualmente una "actualización" del servicio.
-        private const string VERSION = "v1.1";
+        private const string VERSION = "v2.0";
         private const string HttpPrefix = "http://localhost:8090/";
 
         bool firstRun;
