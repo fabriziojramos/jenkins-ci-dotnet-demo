@@ -47,11 +47,19 @@ namespace MyWindowsService
 
         protected override void OnStop()
         {
+            // Debe permanecer síncrono: listener.Stop() es rápido y SCM espera que
+            // OnStop() cierre los recursos del servicio de inmediato.
             StopHttpServer();
 
-            Log(
-                 LogToCouchbase(new List<string> { "OnStop:", DateTime.Now.ToString() })
-             );
+            // Mismo problema que en OnStart(): LogToCouchbase() bloquea en red. Se
+            // despacha en background para que OnStop() retorne de inmediato y no
+            // deje el servicio pegado en STOP_PENDING.
+            ThreadPool.QueueUserWorkItem(_ =>
+            {
+                Log(
+                     LogToCouchbase(new List<string> { "OnStop:", DateTime.Now.ToString() })
+                 );
+            });
         }
 
         private void StartHttpServer()
